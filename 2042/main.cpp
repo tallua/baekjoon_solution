@@ -6,142 +6,150 @@
 using namespace std;
 
 using val_t = long long;
-using result_t = long long;
+#define ARR_SIZE 1000000
 
-#define LEAF_CNT 1048576
-#define NODE_SIZE 2
-#define TREE_HEIGHT 19
-
-template <size_t X, size_t E>
-struct Pow
+template <size_t N>
+struct pow2
 {
-    enum { val = Pow<X, E - 1>::val * X };
+    enum { val = 2 * pow2<N - 1>::val };
 };
 
-template <size_t X>
-struct Pow<X, 0>
+template <>
+struct pow2<0>
 {
     enum { val = 1 };
 };
 
-template <size_t Height>
-struct NodeCount
-{
-    enum { val = LEAF_CNT / Pow<NODE_SIZE, Height>::val };
-};
 
-template<size_t Height>
-struct Nodes
+template <size_t N>
+struct SegTree
 {
-    std::array<val_t, NodeCount<Height>::val> data;
-};
+    array<bool, pow2<N + 1>::val> _updated;
+    array<val_t, pow2<N + 1>::val> _seg;
 
-template<size_t Height>
-struct Tree
-{
-    Nodes<Height> nodes;
-    Tree<Height - 1> low;
-
-    void init(const vector<val_t>& arr)
+    constexpr size_t base(size_t height)
     {
-        low.init(arr);
+        size_t sum = 0;
+        while(height-- != 0)
+            sum += (pow2<N>::val >> height);
+        return sum;
+    }
 
-        size_t N = arr.size();
-        for (size_t i = 0; i < ((N - 1) / Pow<NODE_SIZE, Height>::val) + 1; ++i)
+    constexpr size_t parent(size_t indx)
+    {
+        indx = indx / 2;
+        return indx + pow2<N>::val;
+    }
+
+    constexpr size_t childLeft(size_t indx)
+    {
+        return indx * 2 - pow2<N + 1>::val;
+    }
+
+    constexpr size_t childRight(size_t indx)
+    {
+        return childLeft(indx) + 1;    
+    }
+
+    constexpr bool isLeft(size_t indx)
+    {
+        return indx % 2 == 0;
+    }
+
+    constexpr bool isRight(size_t indx)
+    {
+        return !isLeft(indx);
+    }
+
+    void init(const array<val_t, pow2<N>::val>& buff)
+    {
+        if(buff.size() > pow2<N>::val)
+            return;
+
+        _updated.fill(false);
+        for(size_t it = 0; it < buff.size(); ++it)
         {
-            val_t sum = 0;
-            for (size_t j = i * NODE_SIZE; j < (i + 1) * NODE_SIZE; ++j)
-                sum += low.getatheight(j);
-            nodes.data[i] = sum;
+            _seg[it] = buff[it];
+            _updated[it] = true;
         }
     }
 
-    void set(const size_t& indx, const val_t& val)
+    void set(size_t indx, val_t val)
     {
-        low.set(indx, val);
+        if(indx >= pow2<N>::val)
+            return;
 
-        size_t i = (indx / Pow<NODE_SIZE, Height>::val);
-        nodes.data[i] = low.sum(i * NODE_SIZE, (i + 1) * NODE_SIZE);
-    }
+        _seg[indx] = val;
+        _updated[indx] = true;
 
-    val_t get(const size_t& indx) const
-    {
-        return low.get(indx);
-    }
-
-    result_t getatheight(const size_t& indx) const
-    {
-        return nodes.data[indx];
-    }
-
-    result_t sum(const size_t& indx1, const size_t& indx2) const
-    {
-
-        size_t left_margin = (indx1 / Pow<NODE_SIZE, Height>::val) + 1;
-        size_t right_margin = (indx2 / Pow<NODE_SIZE, Height>::val);
-
-        if (indx1 >= indx2)
+        // set all parents not updated
+        while(indx != pow2<N + 1>::val - 1)
         {
+            indx = parent(indx);
+            _updated[indx] = false;
+        }
+    }
+
+    // [begin, end)
+    val_t sum(size_t begin, size_t end)
+    {
+        if(begin >= pow2<N>::val)
             return 0;
-        }
-        else if (left_margin < right_margin)
+        if(end > pow2<N>::val)
+            return 0;
+        if(begin >= end)
+            return 0;
+        
+        
+        return _sum(begin, end -1);
+    }
+
+    // [s, e]
+    val_t _sum(size_t s, size_t e)
+    {
+        if(s > e)
+            return 0;
+        if(s == e)
+            return getVal(s);
+
+        size_t parent_s = parent(s);
+        size_t parent_e = parent(e);
+        val_t result = 0;
+        if(isRight(s))
         {
-            result_t result = 0;
-            for (size_t i = left_margin * NODE_SIZE; i < right_margin * NODE_SIZE; ++i)
-            {
-                result += nodes.data[i];
-            }
-            result += low.sum(indx1, left_margin * NODE_SIZE);
-            result += low.sum(right_margin * NODE_SIZE, indx2);
-
-            return result;
+            parent_s++;
+            result += getVal(s);
         }
-        else
+        if(isLeft(e))
         {
-            return low.sum(indx1, indx2);
+            parent_e--;
+            result += getVal(e);
         }
-    }
-};
 
-template<>
-struct Tree<0>
-{
-    Nodes<0> nodes;
-
-    void init(const vector<val_t>& arr)
-    {
-        size_t len = arr.size();
-        for (int i = 0; i < len; ++i)
-        {
-            nodes.data[i] = arr[i];
-        }
-    }
-
-    void set(const size_t& indx, const val_t& val)
-    {
-        nodes.data[indx] = val;
-    }
-
-    val_t get(const size_t& indx) const
-    {
-        return nodes.data[indx];
-    }
-
-    result_t getatheight(const size_t& indx) const
-    {
-        return nodes.data[indx];
-    }
-
-    result_t sum(const size_t& indx1, const size_t& indx2) const
-    {
-        result_t result = accumulate(nodes.data.data() + indx1, nodes.data.data() + indx2, 0);
-
+        result += _sum(parent_s, parent_e);
+        
         return result;
     }
+
+    val_t getVal(size_t indx)
+    {
+        if(_updated[indx])
+            return _seg[indx];
+        
+        val_t left = getVal(childLeft(indx));
+        val_t right = getVal(childRight(indx));
+
+        _seg[indx] = left + right;
+        _updated[indx] = true;
+
+        return _seg[indx];
+    }
 };
 
-Tree<TREE_HEIGHT> tree;
+#define SIZE 20
 
+array<val_t, pow2<SIZE>::val> buff;
+SegTree<SIZE> tree;
 
 int main(int argc, char** argv)
 {
@@ -152,20 +160,19 @@ int main(int argc, char** argv)
     size_t N, M, K;
     cin >> N >> M >> K;
 
-    vector<val_t> buff;
-    buff.resize(N, 0);
+    buff.fill(0);
     for (int n = 0; n < N; ++n)
     {
-        int tmp;
-        cin >> tmp;
-        buff[n] = tmp;
+        cin >> buff[n];
     }
 
     tree.init(buff);
 
     for (int mk = 0; mk < M + K; ++mk)
     {
-        int a, b, c;
+        int a;
+        size_t b;
+        long long c;
         cin >> a >> b >> c;
 
         switch (a)
@@ -176,7 +183,7 @@ int main(int argc, char** argv)
         case 2:
             int min = b < c ? b : c;
             int max = b < c ? c : b;
-            result_t result = tree.sum(b - 1, c);
+            val_t result = tree.sum(b - 1, (size_t)(c));
             cout << result << '\n';
             break;
         }
