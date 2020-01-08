@@ -1,5 +1,4 @@
 #include <iostream>
-#include <vector>
 #include <cstring>
 
 using namespace std;
@@ -13,93 +12,63 @@ constexpr size_t pow(size_t e)
     return result;
 }
 
-vector<char*> result;
-
-void gen_result(int k)
+template <size_t K>
+void gen_frame(char* const str, const size_t str_w, const size_t frame_x)
 {
-    if (k < result.size())
-        return;
-    else if (k < 0)
-        return;
+    constexpr auto prev_offset_x = 3 * pow<2>(K - 1);
+    auto prev_x = prev_offset_x + frame_x;
 
-    gen_result(k - 1);
+    constexpr auto cur_w = 3 * pow<2>(K + 1);
+    constexpr auto cur_h = 3 * pow<2>(K);
+    constexpr auto mid_x = 3 * pow<2>(K);
+    constexpr auto mid_y = 3 * pow<2>(K - 1);
 
-    auto cur_x = 3 * pow<2>(k + 1);
-    auto cur_y = 3 * pow<2>(k);
-    result.push_back(new char[cur_x * cur_y]);
+    gen_frame<K - 1>(str, str_w, prev_x);
 
-    auto& current = result.back();
-
-    if (k == 0)
+    for (size_t y = mid_y; y < cur_h; ++y)
     {
-        const char* result_0 =
-            "  *   "
-            " * *  "
-            "***** ";
-        memcpy(current, result_0, cur_x * cur_y);
-    }
-    else
-    {
-        auto low_frame = result[k - 1];
-
-        auto low_x = 3 * pow<2>(k);
-        auto low_y = 3 * pow<2>(k - 1);
-
-        for (int y = 0; y < cur_y; ++y)
+        memset(str + str_w * y, ' ', str_w);
+        for (size_t x = frame_x; x < frame_x + cur_w; ++x)
         {
-            if (y < low_y)
-            {
-                int x = 0;
-                for (; x < (low_x / 2); ++x)
-                    current[y * cur_x + x] = ' ';
-                for (; x < (low_x / 2 * 3); ++x)
-                    current[y * cur_x + x] = low_frame[y * low_x + x - (low_x / 2)];
-                for (; x < cur_x; ++x)
-                    current[y * cur_x + x] = ' ';
-            }
-            else
-            {
-                for (int x = 0; x < cur_x; ++x)
-                {
-                    current[y * cur_x + x] = low_frame[(y - low_y) * low_x + (x % low_x)];
-                }
-            }
+            str[y * str_w + x] = str[(y - mid_y) * str_w + (x % mid_x) + prev_x];
         }
     }
 }
 
-void clean()
+template <>
+void gen_frame<0>(char* const str, const size_t str_w, const size_t frame_x)
 {
-    for(int i = 0; i < result.size(); ++i)
-        delete[] result[i];
-    result.clear();
+    memset(str + str_w * 0, ' ', str_w);
+    memset(str + str_w * 1, ' ', str_w);
+    memset(str + str_w * 2, ' ', str_w);
+
+    memcpy(str + str_w * 0 + frame_x, "  *   ", 6);
+    memcpy(str + str_w * 1 + frame_x, " * *  ", 6);
+    memcpy(str + str_w * 2 + frame_x, "***** ", 6);
 }
 
+char result[3 * pow<2>(11) * 3 * pow<2>(10)];
 
 template <size_t K>
 void print_string()
 {
-    gen_result(K);
+    constexpr auto result_x = 3 * pow<2>(K + 1);
+    constexpr auto result_y = 3 * pow<2>(K);
 
-    auto& current = result[K];
+    gen_frame<K>(result, result_x, 0);
 
-    auto cur_x = 3 * pow<2>(K + 1);
-    auto cur_y = 3 * pow<2>(K);
+    for (int y = 1; y < result_y; ++y)
+        result[y * result_x - 1] = '\n';
+    result[result_y * result_x - 1] = 0;
 
-    for (int y = 1; y < cur_y; ++y)
-    {
-        current[y * cur_x - 1] = '\n';
-    }
-
-    current[cur_y * cur_x - 1] = 0;
-
-    printf("%s\n", current);
-
-    clean();
+    cout << result << '\n';
 }
 
 int main(int argc, char** argv)
 {
+    cin.tie(NULL);
+    ios::sync_with_stdio(false);
+
     int n;
     cin >> n;
 
@@ -107,35 +76,35 @@ int main(int argc, char** argv)
     {
     case 3:
         print_string<0>();
-        break;                
-    case 6:                   
+        break;
+    case 6:
         print_string<1>();
-        break;                
-    case 12:                  
+        break;
+    case 12:
         print_string<2>();
-        break;                
-    case 24:                  
+        break;
+    case 24:
         print_string<3>();
-        break;                
-    case 48:                  
+        break;
+    case 48:
         print_string<4>();
-        break;                
-    case 96:                  
+        break;
+    case 96:
         print_string<5>();
-        break;                
-    case 192:                 
+        break;
+    case 192:
         print_string<6>();
-        break;                
-    case 384:                 
+        break;
+    case 384:
         print_string<7>();
-        break;                
-    case 768:                 
+        break;
+    case 768:
         print_string<8>();
-        break;                
-    case 1536:                
+        break;
+    case 1536:
         print_string<9>();
-        break;                
-    case 3072: 
+        break;
+    case 3072:
         print_string<10>();
         break;
     }
