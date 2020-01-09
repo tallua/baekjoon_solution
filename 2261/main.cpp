@@ -54,24 +54,17 @@ int main(int argc, char **argv)
     std::sort(points.begin(), points.end(), cmp_xy);
 
     coord_t min_square = std::numeric_limits<coord_t>::max();
+    coord_t min_dist = (coord_t)sqrt(min_square);
     set<vec2, CompareYX> candidates;
     auto point_it = points.begin();
     for (auto &current : points)
     {
-        while (cmp_xy(*point_it, current))
+        while (cmp_xy(*point_it, current) && pow2(current.x - point_it->x) >= min_square)
         {
-            if (pow2(current.x - point_it->x) >= min_square)
-            {
-                candidates.erase(*point_it);
-                point_it++;
-            }
-            else
-            {
-                break;
-            }
+            candidates.erase(*point_it);
+            point_it++;
         }
 
-        double min_dist = sqrt(min_square);
         coord_t min_bound = current.y - min_dist;
         coord_t max_bound = current.y + min_dist;
 
@@ -83,6 +76,7 @@ int main(int argc, char **argv)
         {
             auto sqr = get_dist_sqr(current, *c_it);
             min_square = std::min(min_square, sqr);
+            min_dist = (coord_t)sqrt(min_square);
             ++c_it;
         }
 
