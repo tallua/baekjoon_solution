@@ -14,7 +14,73 @@ struct shark_t
 template <typename T>
 constexpr T mymod(T val, T mod)
 {
-    return (val + (val / mod + 1) * mod) % mod;
+    return (val + 2000 * mod) % mod;
+}
+
+void move_shark(shark_t& shark, int R, int C)
+{
+    int mod;
+    int next_dir;
+    switch (shark.dir)
+    {
+    case 1:
+        shark.y -= shark.speed;
+        mod = (R - 1) * 2;
+        shark.y = mymod(shark.y, mod);
+        if (shark.y > (R - 1))
+        {
+            shark.y = mod - shark.y;
+            shark.dir = 2;
+        }
+        else
+        {
+            shark.dir = 1;
+        }
+
+        break;
+    case 2:
+        shark.y += shark.speed;
+        mod = (R - 1) * 2;
+        shark.y = mymod(shark.y, mod);
+        if (shark.y > (R - 1))
+        {
+            shark.y = mod - shark.y;
+            shark.dir = 1;
+        }
+        else
+        {
+            shark.dir = 2;
+        }
+        break;
+    case 3:
+        shark.x += shark.speed;
+        mod = (C - 1) * 2;
+        shark.x = mymod(shark.x, mod);
+        if (shark.x > (C - 1))
+        {
+            shark.x = mod - shark.x;
+            shark.dir = 4;
+        }
+        else
+        {
+            shark.dir = 3;
+        }
+        break;
+    case 4:
+        shark.x -= shark.speed;
+        mod = (C - 1) * 2;
+        shark.x = mymod(shark.x, mod);
+        if (shark.x > (C - 1))
+        {
+            shark.x = mod - shark.x;
+            shark.dir = 3;
+        }
+        else
+        {
+            shark.dir = 4;
+        }
+        break;
+    }
 }
 
 int main(int argc, char** argv)
@@ -63,7 +129,7 @@ int main(int argc, char** argv)
         // capture shark
         if (target_id != -1)
         {
-            size_sum = sharks[target_id].size;
+            size_sum += sharks[target_id].size;
             sharks[target_id].valid = false;
         }
 
@@ -81,70 +147,7 @@ int main(int argc, char** argv)
                 continue;
 
             // next pos of shark
-            {
-                int mod;
-                int next_dir;
-                switch (sharks[m].dir)
-                {
-                case 1:
-                    sharks[m].y -= sharks[m].speed;
-                    mod = (R - 1) * 2;
-                    sharks[m].y = mymod(sharks[m].y, mod);
-                    if (sharks[m].y > (R - 1))
-                    {
-                        sharks[m].y = mod - sharks[m].y;
-                        sharks[m].dir = 1;
-                    }
-                    else
-                    {
-                        sharks[m].dir = 2;
-                    }
-
-                    break;
-                case 2:
-                    sharks[m].y += sharks[m].speed;
-                    mod = (R - 1) * 2;
-                    sharks[m].y = mymod(sharks[m].y, mod);
-                    if (sharks[m].y > (R - 1))
-                    {
-                        sharks[m].y = mod - sharks[m].y;
-                        sharks[m].dir = 1;
-                    }
-                    else
-                    {
-                        sharks[m].dir = 2;
-                    }
-                    break;
-                case 3:
-                    sharks[m].x += sharks[m].speed;
-                    mod = (C - 1) * 2;
-                    sharks[m].x = mymod(sharks[m].x, mod);
-                    if (sharks[m].x > (C - 1))
-                    {
-                        sharks[m].x = mod - sharks[m].x;
-                        sharks[m].dir = 4;
-                    }
-                    else
-                    {
-                        sharks[m].dir = 3;
-                    }
-                    break;
-                case 4:
-                    sharks[m].x -= sharks[m].speed;
-                    mod = (C - 1) * 2;
-                    sharks[m].x = mymod(sharks[m].x, mod);
-                    if (sharks[m].x > (C - 1))
-                    {
-                        sharks[m].x = mod - sharks[m].x;
-                        sharks[m].dir = 4;
-                    }
-                    else
-                    {
-                        sharks[m].dir = 3;
-                    }
-                    break;
-                }
-            }
+            move_shark(sharks[m], R, C);
 
             // move shark
             int shark_at_board = board[sharks[m].y][sharks[m].x];
@@ -170,15 +173,6 @@ int main(int argc, char** argv)
                 target_id = board[sharks[m].y][sharks[m].x];
                 target_y = sharks[m].y;
             }
-        }
-
-        for (int y = 0; y < R; ++y)
-        {
-            for (int x = 0; x < C; ++x)
-            {
-                cout << board[y][x] << ' ';
-            }
-            cout << endl;
         }
     }
 
