@@ -1,9 +1,8 @@
 #include <iostream>
 #include <vector>
-
+#include <set>
 
 using namespace std;
-
 
 class segment_tree
 {
@@ -83,13 +82,13 @@ public:
 
         return index;
     }
-
-
 };
-
 
 int main(int argc, char** argv)
 {
+    cin.tie(NULL);
+    ios::sync_with_stdio(false);
+
     segment_tree candy_box(1000000);
 
     int N;
@@ -128,4 +127,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-
