@@ -1,222 +1,256 @@
 #include <iostream>
 #include <vector>
-#include <utility>
+#include <limits>
 
 using namespace std;
 
-// create segtree of length : 2^n
-// memory required : 2^(n + 2)
-//template type / default / op
-template <typename _VAL_TYPE, class _OP>
-struct BinarySegTree
+template<typename _Type, class _ReduceFn>
+class segment_tree
 {
-    BinarySegTree(int n)
-        : linear_size(pow2(n)), total_size(pow2(n + 1))
-    {
-        _updated.resize(total_size, false);
-        _seg.resize(total_size, _VAL_TYPE());
-    }
-
-    void init(const vector<_VAL_TYPE>& buff)
-    {
-        if(buff.size() > linear_size)
-            return;
-
-        for(size_t it = 0; it < buff.size(); ++it)
-        {
-            _seg[it] = buff[it];
-            _updated[it] = true;
-        }
-        for(size_t it = buff.size(); it < linear_size; ++it)
-        {
-            _seg[it] = _VAL_TYPE();
-            _updated[it] = true;
-        }
-        for(size_t it = linear_size; it < total_size; ++it)
-        {
-            _seg[it] = _VAL_TYPE();
-            _updated[it] = false;
-        }
-    }
-
-    void clearCache()
-    {
-        for(size_t it = linear_size; it < total_size; ++it)
-        {
-            _updated[it] = false;
-        }
-    }
-
-
-    void set(size_t indx, _VAL_TYPE val)
-    {
-        if(indx >= linear_size)
-            return;
-
-        _seg[indx] = val;
-        _updated[indx] = true;
-
-        // set all parents not updated
-        while(indx != total_size - 1)
-        {
-            indx = parent(indx);
-            _updated[indx] = false;
-        }
-    }
-
-    // [begin, end)
-    _VAL_TYPE calc(size_t begin, size_t end, _OP op = _OP())
-    {
-        if(begin >= linear_size)
-            return _VAL_TYPE();
-        if(end > linear_size)
-            return _VAL_TYPE();
-        if(begin >= end)
-            return _VAL_TYPE();
-        
-        return _calc(begin, end -1, op);
-    }
+public:
+    using value_type = _Type;
+    using size_type = std::size_t;
 
 private:
-    const size_t linear_size;
-    const size_t total_size;
+    using depth_type = std::size_t;
+    using reduce_func_type = _ReduceFn;
 
-    vector<bool> _updated;
-    vector<_VAL_TYPE> _seg;
+private:
+    const value_type _default_value;
+    const reduce_func_type _reduce_fn = reduce_func_type();
+    std::vector<std::vector<value_type>> _data;
 
-
-    // [s, e]
-    _VAL_TYPE _calc(size_t s, size_t e, _OP op)
+public:
+    segment_tree(size_type N,
+                 const value_type& default_value = _Type())
+        : _default_value(default_value)
     {
-        if(s > e)
-            return _VAL_TYPE();
-        if(s == e)
-            return _getVal(s, op);
-
-        size_t parent_s = parent(s);
-        size_t parent_e = parent(e);
-        _VAL_TYPE result = _VAL_TYPE();
-        
-        bool is_right_s = s % 2 == 1;
-        if(is_right_s)
+        do
         {
-            parent_s++;
-            result = op(result, _getVal(s, op));
-        }
-        bool is_left_e = e % 2 == 0;
-        if(is_left_e)
+            _data.push_back({});
+            _data.back().resize(N, _default_value);
+
+            N = N == 1 ? 0 : (N + 1) >> 1;
+        } while (N > 0);
+    }
+
+    template <class _ForwardIt>
+    segment_tree(_ForwardIt begin, _ForwardIt end,
+                 const value_type& default_value = _Type())
+        : _default_value(default_value)
+    {
+        _data.push_back({});
+        _data[0].insert(_data[0].begin(), begin, end);
+
+        size_type N = _data.back().size();
+        N = N == 1 ? 0 : (N + 1) >> 1;
+
+        while (N > 0)
         {
-            parent_e--;
-            result = op(result, _getVal(e, op));
+            _data.push_back({});
+            _data.back().resize(N, _default_value);
+            vector<value_type>& prev = _data[_data.size() - 2];
+
+            size_type n = 0;
+            while (n < N - 1)
+            {
+                _data.back()[n] = _reduce_fn(prev[n << 1], prev[(n << 1) + 1]);
+                ++n;
+            }
+
+            if ((n << 1) + 1 < prev.size())
+                _data.back()[n] = _reduce_fn(prev[n << 1], prev[(n << 1) + 1]);
+            else
+                _data.back()[n] = prev[n << 1];
+
+            N = N == 1 ? 0 : (N + 1) >> 1;
+        }
+    }
+
+public:
+    constexpr size_type size() const
+    {
+        return _data[0].size();
+    }
+
+    value_type& get(size_type index)
+    {
+        return _data[0].at(index);
+    }
+
+    const value_type& get(size_type index) const
+    {
+        return _data[0].at(index);
+    }
+
+    value_type& back()
+    {
+        return _data[0].back();
+    }
+
+    const value_type& back() const
+    {
+        return _data[0].back();
+    }
+
+public:
+    void update(size_type index, value_type value)
+    {
+        if (_data[0].size() <= index)
+            return;
+
+        _data[0][index] = value;
+
+        index = index >> 1;
+        depth_type depth = 1;
+        while (depth < _data.size())
+        {
+            const auto _child_left = index << 1;
+            const auto _child_right = _child_left + 1;
+
+            _data[depth][index] = _data[depth - 1][_child_left];
+            if (_child_right < _data[depth - 1].size())
+                _data[depth][index] = _reduce_fn(_data[depth][index], _data[depth - 1][_child_right]);
+
+            index = index >> 1;
+            depth += 1;
+        }
+    }
+
+    value_type query_range(size_type begin, size_type end)
+    {
+        if (end <= begin)
+            return _default_value;
+        if (_data[0].size() < end)
+            return _default_value;
+
+        return _query_range(begin, end - 1, 0);
+    }
+
+    template <class _Query>
+    size_type index_query(_Query query)
+    {
+        size_type index = 0;
+        depth_type depth = _data.size() - 1;
+        while (depth != 0)
+        {
+            const size_type _child_left = index << 1;
+            const size_type _child_right = _child_left + 1;
+
+            if (_data[depth - 1].size() <= _child_right)
+            {
+                if (query(_data[depth - 1][_child_left], _default_value))
+                {
+                    return size();
+                }
+                else
+                {
+                    index = _child_left;
+                }
+            }
+            else
+            {
+                if (query(_data[depth - 1][_child_left], _data[depth - 1][_child_right]))
+                {
+                    index = _child_right;
+                }
+                else
+                {
+                    index = _child_left;
+                }
+            }
+
+            depth--;
         }
 
-        result = op(result, _calc(parent_s, parent_e, op));
-        
+        return index;
+    }
+private:
+    /// note : front and back are inclusive range
+    value_type _query_range(size_type front, size_type back, depth_type depth)
+    {
+        if (front == back)
+            return _data[depth][front];
+
+        value_type result = _default_value;
+
+        if (front % 2 != 0)
+        {
+            result = _reduce_fn(result, _data[depth][front]);
+            front += 1;
+        }
+
+        if (back % 2 == 0)
+        {
+            result = _reduce_fn(result, _data[depth][back]);
+            back -= 1;
+        }
+
+        const size_type half_front = front >> 1;
+        const size_type half_back = back >> 1;
+
+        if (half_front <= half_back)
+            result = _reduce_fn(result, _query_range(half_front, half_back, depth + 1));
+
         return result;
     }
-
-    _VAL_TYPE _getVal(size_t indx, _OP op)
-    {
-        if(_updated[indx])
-            return _seg[indx];
-        
-        _VAL_TYPE left = _getVal(childLeft(indx), op);
-        _VAL_TYPE right = _getVal(childRight(indx), op);
-
-        _seg[indx] = op(left, right);
-        _updated[indx] = true;
-
-        return _seg[indx];
-    }
-
-    constexpr size_t parent(size_t indx) const
-    {
-        indx = indx / 2;
-        return indx + linear_size;
-    }
-
-    constexpr size_t childLeft(size_t indx) const
-    {
-        return indx * 2 - total_size;
-    }
-
-    constexpr size_t childRight(size_t indx) const
-    {
-        return childLeft(indx) + 1;    
-    }
-    
-    constexpr size_t pow2(const int n) const
-    {
-        return 1 << n;
-    }
 };
 
-struct val_t 
-{ 
-    val_t() :
-        min(1000000000), max(0)
-    {
-        
-    }
 
-    val_t(const val_t& val) :
-        min(val.min), max(val.max)
-    {
-        
-    }
-
-    val_t(long long min, long long max) :
-        min(min), max(max)
-    {
-        
-    }
-
-    long long min;
-    long long max; 
-};
-
+template <typename T>
 struct minmax
 {
-    const val_t operator() (const val_t& lhs, const val_t& rhs) const
-    {
-        long long min = lhs.min < rhs.min ? lhs.min : rhs.min;
-        long long max = lhs.max < rhs.max ? rhs.max : lhs.max;
-        return val_t{min, max};
-    }   
+    const static minmax<T> default_val;
+
+    T min;
+    T max;
 };
 
-vector<val_t> buff;
-BinarySegTree<val_t, minmax> tree(17);
+template<typename T>
+const minmax<T> minmax<T>::default_val = { numeric_limits<T>::max(), numeric_limits<T>::min() };
+
+
+template<typename T>
+struct choose_minmax
+{
+    const minmax<T> operator() (const minmax<T>& lhs, const minmax<T>& rhs) const
+    {
+        minmax<T> result;
+        result.min = lhs.min < rhs.min ? lhs.min : rhs.min;
+        result.max = lhs.max < rhs.max ? rhs.max : lhs.max;
+
+        return result;
+    }
+};
 
 int main(int argc, char** argv)
 {
-    // WTF
     cin.tie(NULL);
     ios::sync_with_stdio(false);
 
-    size_t N, M;
+    int N, M;
     cin >> N >> M;
 
-    buff.resize(N, val_t());
+    vector<minmax<int>> buff;
+    buff.resize(N);
     for (int n = 0; n < N; ++n)
     {
-        long long tmp;
+        int tmp;
         cin >> tmp;
-        buff[n] = {tmp, tmp};
+        buff[n].min = tmp;
+        buff[n].max = tmp;
     }
 
-    tree.init(buff);
+    segment_tree<minmax<int>, choose_minmax<int>> segtree(buff.begin(), buff.end(), minmax<int>::default_val);
 
     for (int m = 0; m < M; ++m)
     {
-        size_t b;
-        size_t c;
-        cin >> b >> c;
+        int a, b;
+        cin >> a >> b;
 
-        size_t min = b < c ? b : c;
-        size_t max = b < c ? c : b;
-        val_t result = tree.calc(min - 1, max);
-        cout << result.min << " " << result.max << '\n';
+        auto query_result = segtree.query_range(a - 1, b);
+        cout << query_result.min << ' ' << query_result.max << '\n';
     }
-}
 
+    return 0;
+}

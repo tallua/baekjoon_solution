@@ -1,11 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <iterator>
-#include <array>
-#include <numeric>
 
 using namespace std;
-
 
 template<typename _Type, class _ReduceFn>
 class segment_tree
@@ -199,6 +195,7 @@ private:
     }
 };
 
+
 template <typename _Type>
 struct sum
 {
@@ -208,49 +205,19 @@ struct sum
     }
 };
 
-int main(int argc, char** argv)
+template <typename _Type>
+struct nth_index
 {
-    cin.tie(NULL);
-    ios::sync_with_stdio(false);
+    _Type nth;
 
-    size_t N, M, K;
-    cin >> N >> M >> K;
-
-    int query_count = M + K;
-
-    vector<long long> buff;
-    buff.resize(N, 0);
-    for (size_t n = 0; n < N; ++n)
+    bool operator() (_Type lhs, _Type rhs)
     {
-        cin >> buff[n];
-    }
-
-    segment_tree<long long, sum<long long>> tree(buff.begin(), buff.end());
-
-    while(query_count--)
-    {
-        int a;
-        size_t b;
-        long long c;
-        cin >> a >> b >> c;
-
-        switch (a)
+        if (nth <= lhs)
         {
-        case 1:
-            tree.update(b - 1, c);
-            break;
-        case 2:
-            size_t min_index = b < c ? b : c;
-            size_t max_index = b < c ? c : b;
-
-            long long result = tree.query_range(min_index - 1, max_index);
-            cout << result << '\n';
-            break;
+            return false;
         }
+
+        nth -= lhs;
+        return true;
     }
-}
-
-
-
-
-
+};
