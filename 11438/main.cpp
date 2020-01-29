@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <array>
-#include <iomanip>
 
 using namespace std;
 using node_id = int;
@@ -121,7 +120,7 @@ public:
         }
     }
 
-    value_type query_range(size_type begin, size_type end)
+    value_type query_range(size_type begin, size_type end) const
     {
         if (end <= begin)
             return _default_value;
@@ -171,7 +170,7 @@ public:
     }
 private:
     /// note : front and back are inclusive range
-    value_type _query_range(size_type front, size_type back, depth_type depth)
+    value_type _query_range(size_type front, size_type back, depth_type depth) const
     {
         if (front == back)
             return _data[depth][front];
@@ -202,7 +201,7 @@ private:
 
 struct min_val
 {
-    const vector<int> euler_depth;
+    const vector<int>& euler_depth;
 
     min_val(const vector<int>& euler_depth) : euler_depth(euler_depth) { }
 
@@ -218,7 +217,7 @@ struct min_val
 
 
 void build_euler_path(const vector<vector<node_id>>& edges, node_id parent,
-    vector<node_id>& path, vector<int>& depth, vector<size_t>& first, vector<size_t>& last)
+    vector<node_id>& path, vector<int>& depth, vector<size_t>& first)
 {
     node_id cur_node = path.back();
     int cur_depth = depth.back();
@@ -230,12 +229,11 @@ void build_euler_path(const vector<vector<node_id>>& edges, node_id parent,
         {
             path.push_back(child);
             depth.push_back(cur_depth + 1);
-            build_euler_path(edges, cur_node, path, depth, first, last);
+            build_euler_path(edges, cur_node, path, depth, first);
             path.push_back(cur_node);
             depth.push_back(cur_depth);
         }
     }
-    last[cur_node] = path.size() - 1;
 }
 
 
@@ -262,9 +260,7 @@ int main(int argc, char** argv)
 
     // build euler_path
     vector<size_t> first_appear;
-    vector<size_t> last_appear;
     first_appear.resize(N);
-    last_appear.resize(N);
 
     vector<node_id> euler_path;
     vector<int> euler_depth;
@@ -274,23 +270,7 @@ int main(int argc, char** argv)
     euler_path.push_back(0);
     euler_depth.push_back(0);
 
-    build_euler_path(edges, 0, euler_path, euler_depth, first_appear, last_appear);
-
-    //for (int i = 0; i < euler_path.size(); ++i)
-    //{
-    //    cout << setw(2) << i << ' ';
-    //}
-    //cout << endl;
-    //for (int i = 0; i < euler_path.size(); ++i)
-    //{
-    //    cout << setw(2) << euler_path[i] << ' ';
-    //}
-    //cout << endl;
-    //for (int i = 0; i < euler_depth.size(); ++i)
-    //{
-    //    cout << setw(2) << euler_depth[i] << ' ';
-    //}
-    //cout << endl;
+    build_euler_path(edges, 0, euler_path, euler_depth, first_appear);
 
     // build cache
     vector<size_t> indexes;
@@ -299,7 +279,7 @@ int main(int argc, char** argv)
     {
         indexes[i] = i;
     }
-    min_val reduce_fn(euler_depth);
+    const min_val reduce_fn(euler_depth);
     segment_tree<size_t, min_val> segtree(indexes.begin(), indexes.end(), euler_depth.size(), reduce_fn);
 
     int M;
@@ -318,7 +298,7 @@ int main(int argc, char** argv)
         if (b_indx < a_indx)
             swap(a_indx, b_indx);
 
-        auto result = segtree.query_range(a_indx, b_indx + 1);
+        const auto result = segtree.query_range(a_indx, b_indx + 1);
 
         cout << (euler_path[result] + 1) << '\n';
     }

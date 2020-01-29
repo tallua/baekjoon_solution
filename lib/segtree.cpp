@@ -16,13 +16,14 @@ private:
 
 private:
     const value_type _default_value;
-    const reduce_func_type _reduce_fn = reduce_func_type();
+    const reduce_func_type _reduce_fn;
     std::vector<std::vector<value_type>> _data;
 
 public:
     segment_tree(size_type N,
-                 const value_type& default_value = _Type())
-        : _default_value(default_value)
+                 const value_type& default_value = _Type(),
+                 const reduce_func_type& reduce_fn = reduce_func_type())
+        : _default_value(default_value), _reduce_fn(reduce_fn)
     {
         do
         {
@@ -35,8 +36,9 @@ public:
 
     template <class _ForwardIt>
     segment_tree(_ForwardIt begin, _ForwardIt end,
-                 const value_type& default_value = _Type())
-        : _default_value(default_value)
+                 const value_type& default_value = _Type(),
+                 const reduce_func_type& reduce_fn = reduce_func_type())
+        : _default_value(default_value), _reduce_fn(reduce_fn)
     {
         _data.push_back({});
         _data[0].insert(_data[0].begin(), begin, end);
@@ -116,7 +118,7 @@ public:
         }
     }
 
-    value_type query_range(size_type begin, size_type end)
+    value_type query_range(size_type begin, size_type end) const
     {
         if (end <= begin)
             return _default_value;
@@ -127,7 +129,7 @@ public:
     }
 
     template <class _Query>
-    size_type index_query(_Query query)
+    size_type index_query(_Query query) const
     {
         size_type index = 0;
         depth_type depth = _data.size() - 1;
@@ -166,7 +168,7 @@ public:
     }
 private:
     /// note : front and back are inclusive range
-    value_type _query_range(size_type front, size_type back, depth_type depth)
+    value_type _query_range(size_type front, size_type back, depth_type depth) const
     {
         if (front == back)
             return _data[depth][front];
