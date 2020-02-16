@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <set>
 #include <queue>
 #include <unordered_map>
 #include <algorithm>
@@ -8,13 +7,13 @@
 
 using namespace std;
 
-using coord_t = int;
+using coord_t = long long;
 using cost_t = long long;
 
 struct rect_t
 {
-    int lx, ly, hx, hy;
-    int cost;
+    coord_t lx, ly, hx, hy;
+    cost_t cost;
 };
 
 struct astar_task
@@ -22,12 +21,11 @@ struct astar_task
     size_t x, y;
     cost_t actual;
     cost_t estimate;
-
 };
 
 struct task_sort
 {
-    bool operator() (const astar_task& lhs, const astar_task& rhs)
+    constexpr bool operator() (const astar_task& lhs, const astar_task& rhs) const
     {
         return lhs.estimate > rhs.estimate;
     }
@@ -63,8 +61,8 @@ void parse_inputs(vector<rect_t>& departs, vector<coord_t>& indx_to_x, vector<co
     sort(x_coord_set.begin(), x_coord_set.end());
     sort(y_coord_set.begin(), y_coord_set.end());
 
-    indx_to_x.reserve(x_coord_set.size());
-    indx_to_y.reserve(y_coord_set.size());
+    indx_to_x.reserve(x_coord_set.size() + 1);
+    indx_to_y.reserve(y_coord_set.size() + 1);
     indx_to_x.push_back(0);
     indx_to_y.push_back(0);
 
@@ -112,7 +110,7 @@ int main(int argc, char** argv)
     }
 
     // build cost_map using line
-    auto calc_indx = [&](size_t y, size_t x)
+    auto calc_indx = [&](size_t y, size_t x) -> size_t
     {
         return y * grid_x_size + x;
     };
@@ -150,7 +148,7 @@ int main(int argc, char** argv)
     vector<bool> visited;
     visited.resize(grid_y_size * grid_x_size, false);
 
-    auto cost_to_end = [&](const size_t& x, const size_t& y) -> cost_t {
+    auto cost_to_end = [&](const size_t& x, const size_t& y) -> coord_t {
         return (abs(end_x - indx_to_x[x]) + abs(end_y - indx_to_y[y])) * 10;
     };
 
@@ -162,7 +160,6 @@ int main(int argc, char** argv)
     priority_queue<astar_task, vector<astar_task>, task_sort> pq;
     pq.push({ start_indx_x, start_indx_y, 0LL, cost_to_end(start_indx_x, start_indx_y) });
 
-    cost_t result = 0;
     while (true)
     {
         const astar_task task = pq.top();
@@ -171,7 +168,7 @@ int main(int argc, char** argv)
         //    " : " << task.actual << " | " << task.estimate << endl;
         if (task.x == end_indx_x && task.y == end_indx_y)
         {
-            result = task.actual;
+            cout << task.actual << endl;
             break;
         }
 
@@ -220,8 +217,6 @@ int main(int argc, char** argv)
             pq.push({ next_x, next_y, actual, actual + cost_to_end(next_x, next_y) });
         }
     }
-
-    cout << result << endl;
 
     return 0;
 }
