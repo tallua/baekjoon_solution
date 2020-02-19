@@ -7,30 +7,7 @@ using namespace std;
 
 const size_t none_id = numeric_limits<size_t>::max();
 
-size_t call_count = 0;
-
-bool bipartite_match(const vector<pair<size_t, size_t>> &graph, size_t id, vector<size_t> &assigned, vector<bool> &visited)
-{
-    call_count++;
-
-    for (size_t avail = graph[id].first; avail < graph[id].second; ++avail)
-    {
-        if (!visited[avail])
-        {
-            visited[avail] = true;
-
-            if (assigned[avail] == none_id || bipartite_match(graph, assigned[avail], assigned, visited))
-            {
-                assigned[avail] = id;
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     cin.tie(NULL);
     ios::sync_with_stdio(false);
@@ -40,36 +17,42 @@ int main(int argc, char **argv)
 
     while (T--)
     {
-        call_count = 0;
-
         size_t N, M;
         cin >> N >> M;
 
-        vector<pair<size_t, size_t>> graph;
-        graph.resize(N);
-        for (size_t n = 0; n < N; ++n)
+        using book_range = pair<size_t, size_t>;
+        vector<book_range> graph;
+        graph.resize(M);
+        for (size_t m = 0; m < M; ++m)
         {
             size_t a, b;
             cin >> a >> b;
             a--;
 
-            graph[n] = { a, b };
+            graph[m] = { a, b };
         }
 
-        vector<size_t> assigned;
-        assigned.resize(M, none_id);
+        sort(graph.begin(), graph.end(), [](const book_range& lhs, const book_range& rhs) {
+            return lhs.second != rhs.second ? lhs.second < rhs.second : lhs.first < rhs.first;
+        });
+
+        vector<bool> assigned;
+        assigned.resize(N, false);
 
         size_t count = 0;
-        for (size_t n = 0; n < N; ++n)
+        for (const auto& range : graph)
         {
-            vector<bool> visited;
-            visited.resize(M, false);
-
-            if (bipartite_match(graph, n, assigned, visited))
-                count++;
+            for (size_t book_indx = range.first; book_indx < range.second; ++book_indx)
+            {
+                if (assigned[book_indx] == false)
+                {
+                    assigned[book_indx] = true;
+                    count++;
+                    break;
+                }
+            }
         }
 
-        cout << "call : " << call_count << '\n';
         cout << count << '\n';
     }
 
