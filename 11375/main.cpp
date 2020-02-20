@@ -7,63 +7,36 @@ using namespace std;
 
 const size_t none_id = numeric_limits<size_t>::max();
 
-bool bipartite_match(const vector<pair<size_t, size_t>>& graph, size_t id, 
-                     vector<size_t>& assigned, vector<bool>& visited, size_t greed)
+bool bipartite_match(const vector<vector<size_t>> &graph, size_t id, vector<size_t> &assigned, vector<bool> &visited)
 {
-    if (greed <= graph[id].first || greed >= graph[id].second)
+    for (const size_t &avail : graph[id])
     {
-        for (size_t avail = graph[id].first; avail < graph[id].second; ++avail)
+        if (!visited[avail] && assigned[avail] == none_id)
         {
-            if (!visited[avail])
-            {
-                visited[avail] = true;
 
-                if (assigned[avail] == none_id || bipartite_match(graph, assigned[avail], assigned, visited, avail))
-                {
-                    assigned[avail] = id;
-                    return true;
-                }
-            }
+            visited[avail] = true;
+            assigned[avail] = id;
+            return true;
         }
-
-        return false;
-    }
-    else
-    {
-        for (size_t avail = greed; avail < graph[id].second; ++avail)
-        {
-            if (!visited[avail])
-            {
-                visited[avail] = true;
-
-                if (assigned[avail] == none_id || bipartite_match(graph, assigned[avail], assigned, visited, avail))
-                {
-                    assigned[avail] = id;
-                    return true;
-                }
-            }
-        }
-
-        for (size_t avail = graph[id].first; avail < greed; ++avail)
-        {
-            if (!visited[avail])
-            {
-                visited[avail] = true;
-
-                if (assigned[avail] == none_id || bipartite_match(graph, assigned[avail], assigned, visited, avail))
-                {
-                    assigned[avail] = id;
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
+    for (const size_t &avail : graph[id])
+    {
+        if (!visited[avail])
+        {
+            visited[avail] = true;
+            if (assigned[avail] == none_id || bipartite_match(graph, assigned[avail], assigned, visited))
+            {
+                assigned[avail] = id;
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     cin.tie(NULL);
     ios::sync_with_stdio(false);
@@ -73,12 +46,12 @@ int main(int argc, char** argv)
 
     vector<vector<size_t>> graph;
     graph.resize(N);
-    for(size_t n = 0; n < N; ++n)
+    for (size_t n = 0; n < N; ++n)
     {
         size_t job_count;
         cin >> job_count;
 
-        while(job_count--)
+        while (job_count--)
         {
             size_t job_num;
             cin >> job_num;
@@ -86,29 +59,29 @@ int main(int argc, char** argv)
         }
     }
 
-    for(size_t n = 0; n < N; ++n)
+    for (size_t n = 0; n < N; ++n)
     {
         sort(graph[n].begin(), graph[n].end());
     }
-    //
-    //sort(graph.begin(), graph.end(), [](const vector<size_t>& lhs, const vector<size_t>& rhs) {
-    //    if(lhs.size() == 0)
-    //        return false;
-    //    else if(rhs.size() == 0)
-    //        return true;
-    //    return lhs.back() > rhs.back();
-    //});
+
+    sort(graph.begin(), graph.end(), [](const vector<size_t> &lhs, const vector<size_t> &rhs) {
+        if (lhs.size() == 0)
+            return false;
+        else if (rhs.size() == 0)
+            return true;
+        return lhs.back() > rhs.back();
+    });
 
     vector<size_t> assigned;
     assigned.resize(M, none_id);
 
     size_t count = 0;
-    for(size_t n = 0; n < N; ++n)
+    for (size_t n = 0; n < N; ++n)
     {
         vector<bool> visited;
         visited.resize(M, false);
 
-        if(bipartite_match(graph, n, assigned, visited))
+        if (bipartite_match(graph, n, assigned, visited))
             count++;
     }
 
