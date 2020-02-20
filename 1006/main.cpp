@@ -1,11 +1,12 @@
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <array>
 #include <algorithm>
 
 using namespace std;
 
-int solve(const vector<array<int, 2>>& enemies, int N, int W, array<int, 3> init, size_t last)
+int solve(const deque<array<int, 2>>& enemies, int N, int W, array<int, 3> init, size_t last)
 {
     array<int, 3> current;
     array<int, 3> next;
@@ -109,7 +110,7 @@ int main(int argc, char** argv)
         int N, W;
         cin >> N >> W;
 
-        vector<array<int, 2>> enemies;
+        deque<array<int, 2>> enemies;
         enemies.resize(N);
 
         for (int n = 0; n < N; ++n)
@@ -134,6 +135,14 @@ int main(int argc, char** argv)
             result = min(result, tmp);
         }
 
+        if(enemies[N - 1][0] + enemies[0][0] <= W && enemies[N - 1][1] + enemies[0][1] <= W)
+        {
+            enemies.push_back(enemies.front());
+            enemies.pop_front();
+
+            int tmp = solve(enemies, N, W, { enemies[0][0] + enemies[0][1] <= W ? 1 : 2, 1, 1 }, 0);
+            result = min(result, tmp);
+        }
         cout << result << endl;
     }
 
