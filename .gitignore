@@ -1,4 +1,6 @@
-*/main*
-!*/main*.cpp
-*/a.out
+*/*.out
+*/*.exe
+
 .vscode/*
+
+*/tmp/*
