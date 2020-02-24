@@ -5,11 +5,52 @@
 #include <algorithm>
 
 using namespace std;
+using hash_t = unsigned long;
+using ul = unsigned long long;
 
-int main(int argc, char **argv)
+const size_t max_hash_size = 17876543;
+const hash_t hash_key_unused = 1 << 30;
+hash_t hash_key[max_hash_size] = { 0, };
+int counter[max_hash_size] = { 0, };
+
+void next_hash(hash_t& val)
+{
+    val = (((val << 2) + ~val) ^ 0x34567871) % max_hash_size;
+}
+
+void assign_key(const int val, hash_t& key)
+{
+    key = val;
+
+    next_hash(key);
+    while (hash_key[key] != hash_key_unused && hash_key[key] != val)
+        next_hash(key);
+
+    if (hash_key[key] == hash_key_unused)
+        hash_key[key] = val;
+
+    //cout << "assign : " << val << " : " << key << endl;
+}
+
+bool find_key(const int val, hash_t& key)
+{
+    key = val;
+
+    next_hash(key);
+    while (hash_key[key] != hash_key_unused && hash_key[key] != val)
+        next_hash(key);
+
+    if (hash_key[key] == hash_key_unused || hash_key[key] != val)
+        return false;
+    return true;
+}
+
+int main(int argc, char** argv)
 {
     ios::sync_with_stdio(false);
     cin.tie(NULL);
+
+    std::fill_n(hash_key, max_hash_size, hash_key_unused);
 
     int N;
     cin >> N;
@@ -20,43 +61,30 @@ int main(int argc, char **argv)
     c.resize(N);
     d.resize(N);
 
-    for (size_t i = 0; i < N; ++i)
+    for (ul i = 0; i < N; ++i)
     {
         cin >> a[i] >> b[i] >> c[i] >> d[i];
     }
 
-    map<int, size_t> ab, cd;
-    for (int i = 0; i < N; ++i)
+    for (ul i = 0; i < N; ++i)
     {
-        for (int j = 0; j < N; ++j)
+        for (ul j = 0; j < N; ++j)
         {
-            ab[a[i] + b[j]]++;
-            cd[c[i] + d[j]]++;
+            hash_t key;
+            assign_key(a[i] + b[j], key);
+            counter[key]++;
         }
     }
 
-    auto ab_it = ab.begin();
-    auto cd_it = cd.rbegin();
-
-    size_t answer = 0;
-
-    while (ab_it != ab.end() && cd_it != cd.rend())
+    long long answer = 0;
+    for (ul i = 0; i < N; ++i)
     {
-        //cout << "checking : " << *ab_it << ", " << *cd_it << endl;
-        auto sum = ab_it->first + cd_it->first;
-        if (sum == 0)
+        for (ul j = 0; j < N; ++j)
         {
-            answer += ab_it->second * cd_it->second;
-            ab_it++;
-            cd_it++;
-        }
-        else if (sum > 0)
-        {
-            cd_it++;
-        }
-        else
-        {
-            ab_it++;
+            hash_t key;
+            bool found = find_key(0 - c[i] - d[j], key);
+            if (found)
+                answer += counter[key];
         }
     }
 
