@@ -36,8 +36,26 @@ public:
         return result;
     }
 
+    size_t index_query(int val)
+    {
+        return _index_query(0, 0, _N - 1, val);
+    }
+
 private:
-    void _update_range(size_t x, size_t left, size_t right, size_t front, size_t back, const int& delta)
+    void _update_lazy(size_t x, size_t left, size_t right)
+    {
+        _data[x].current += _data[x].lazy * (right - left + 1);
+
+        if (left != right)
+        {
+            _data[2 * x + 1].lazy += _data[x].lazy;
+            _data[2 * x + 2].lazy += _data[x].lazy;
+        }
+
+        _data[x].lazy = _default_val;
+    }
+
+    void _update_range(size_t x, size_t left, size_t right, size_t front, size_t back, const int delta)
     {
         _update_lazy(x, left, right);
         if (back < left || right < front)
@@ -59,7 +77,6 @@ private:
         size_t mid = (left + right) / 2;
         _update_range(2 * x + 1, left, mid, front, back, delta);
         _update_range(2 * x + 2, mid + 1, right, front, back, delta);
-        _data[x].current = _data[2 * x + 1].current + _data[2 * x + 2].current;
     }
 
     void _query_range(size_t x, size_t left, size_t right, size_t front, size_t back, int& result)
@@ -82,82 +99,18 @@ private:
         _query_range(2 * x + 2, mid + 1, right, front, back, result);
     }
 
-    void _update_lazy(size_t x, size_t left, size_t right)
-    {
-        _data[x].current += _data[x].lazy * (right - left + 1);
-
-        if (left != right)
-        {
-            _data[2 * x + 1].lazy += _data[x].lazy;
-            _data[2 * x + 2].lazy += _data[x].lazy;
-        }
-
-        _data[x].lazy = _default_val;
-    }
-};
-
-class segment_tree
-{
-private:
-    vector<int> _data;
-    size_t _N;
-
-public:
-    segment_tree(size_t N, int init_val = int(), int default_val = int())
-        : _N(N)
-    {
-        _data.resize(4 * N, init_val);
-        _init(0, 0, _N - 1);
-    }
-
-    void update(size_t index, int val)
-    {
-        _update(0, 0, _N - 1, index, val);
-    }
-
-    size_t index_query(int val)
-    {
-        return _index_query(0, 0, _N - 1, val);
-    }
-
-private:
-    void _init(size_t x, size_t left, size_t right)
-    {
-        if (left == right)
-            return;
-
-        size_t mid = (left + right) / 2;
-        _init(2 * x + 1, left, mid);
-        _init(2 * x + 2, mid + 1, right);
-        _data[x] = _data[2 * x + 1] + _data[2 * x + 2];
-    }
-
-    void _update(size_t x, size_t left, size_t right, size_t index, int val)
-    {
-        if (index < left || right < index)
-            return;
-
-        if (left == right)
-        {
-            _data[x] = val;
-            return;
-        }
-
-        size_t mid = (left + right) / 2;
-        _update(2 * x + 1, left, mid, index, val);
-        _update(2 * x + 2, mid + 1, right, index, val);
-        _data[x] = _data[2 * x + 1] + _data[2 * x + 2];
-    }
 
     size_t _index_query(size_t x, size_t left, size_t right, int val)
     {
+        _update_lazy(x, left, right);
         if (left == right)
             return left;
 
         size_t mid = (left + right) / 2;
-        if (_data[2 * x + 1] < val)
+        _update_lazy(2 * x + 1, left, mid);
+        if (_data[2 * x + 1].current < val)
         {
-            return _index_query(2 * x + 2, mid + 1, right, val - _data[2 * x + 1]);
+            return _index_query(2 * x + 2, mid + 1, right, val - _data[2 * x + 1].current);
         }
         else
         {
@@ -173,7 +126,8 @@ int main(int argc, char** argv)
     ios::sync_with_stdio(false);
 
     lazy_segtree can_info(3000000);
-    segment_tree index_counter(3000000, 1, 0);
+    lazy_segtree index_counter(1300000);
+    index_counter.update_range(0, 1300000, 1);
 
     int N;
     cin >> N;
@@ -202,7 +156,6 @@ int main(int argc, char** argv)
         size_t white;
         cin >> white;
         can_info.update_range(current_heights[n], current_heights[n] + white, 5);
-        current_heights[n] += white;
     }
 
     int M;
@@ -214,7 +167,7 @@ int main(int argc, char** argv)
         cin >> m;
 
         size_t index = index_counter.index_query(m);
-        index_counter.update(index, 0);
+        index_counter.update_range(index, index + 1, -1);
         int result = can_info.query_range(index, index + 1);
         //cout << index << " : " << result << endl;
         cout << result << '\n';
