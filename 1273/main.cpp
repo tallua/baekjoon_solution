@@ -44,6 +44,9 @@ public:
 private:
     void _update_lazy(size_t x, size_t left, size_t right)
     {
+        if (_data[x].lazy == _default_val)
+            return;
+
         _data[x].current += _data[x].lazy * (right - left + 1);
 
         if (left != right)
@@ -57,7 +60,7 @@ private:
 
     void _update_range(size_t x, size_t left, size_t right, size_t front, size_t back, const int delta)
     {
-        _update_lazy(x, left, right);
+        //_update_lazy(x, left, right);
         if (back < left || right < front)
             return;
 
