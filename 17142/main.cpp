@@ -35,7 +35,7 @@ int fill(const map_t& map, const size_t& N, const vector<size_t>& virus_index,
         {
             count_map[indx - 1] = count_map[indx] + 1;
             current.push_back(indx - 1);
-            if(count_map[indx] + 1 >= hint)
+            if(map[indx - 1] == '0' && count_map[indx - 1] >= hint)
                 return int_max;
         }
         
@@ -43,7 +43,7 @@ int fill(const map_t& map, const size_t& N, const vector<size_t>& virus_index,
         {
             count_map[indx + 1] = count_map[indx] + 1;
             current.push_back(indx + 1);
-            if(count_map[indx] + 1 >= hint)
+            if(map[indx + 1] == '0' && count_map[indx + 1] >= hint)
                 return int_max;
         }
         
@@ -51,7 +51,7 @@ int fill(const map_t& map, const size_t& N, const vector<size_t>& virus_index,
         {
             count_map[indx - N] = count_map[indx] + 1;
             current.push_back(indx - N);
-            if(count_map[indx] + 1 >= hint)
+            if(map[indx - N] == '0' && count_map[indx - N] >= hint)
                 return int_max;
         }
         
@@ -59,7 +59,7 @@ int fill(const map_t& map, const size_t& N, const vector<size_t>& virus_index,
         {
             count_map[indx + N] = count_map[indx] + 1;
             current.push_back(indx + N);
-            if(count_map[indx] + 1 >= hint)
+            if(map[indx + N] == '0' && count_map[indx + N] >= hint)
                 return int_max;
         }
     }
