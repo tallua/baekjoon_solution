@@ -1,16 +1,18 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <limits>
 
 using namespace std;
+const size_t ID_END = numeric_limits<size_t>::max();
 
 // dfs, post order
 void topology_sort(const vector<vector<size_t>>& graph, size_t index, vector<bool>& visited, vector<size_t>& result)
 {
     if(visited[index])
         return;
-    visited[index] = true;
 
+    visited[index] = true;
     for(size_t i = 0; i < graph[index].size(); ++i)
     {
         topology_sort(graph, graph[index][i], visited, result);
@@ -19,16 +21,15 @@ void topology_sort(const vector<vector<size_t>>& graph, size_t index, vector<boo
     result.push_back(index);
 }
 
-void build_scc(const vector<vector<size_t>>& rev_graphs, vector<bool>& visited, size_t index, vector<size_t>& result)
+void build_scc2(const vector<vector<size_t>>& rev_graphs, vector<size_t>& result, size_t index, size_t id)
 {
-    if(visited[index])
+    if(result[index] != ID_END)
         return;
-    visited[index] = true;
-    result.push_back(index);
+    result[index] = id;
 
     for(size_t i = 0; i < rev_graphs[index].size(); ++i)
     {
-        build_scc(rev_graphs, visited, rev_graphs[index][i], result);
+        build_scc2(rev_graphs, result, rev_graphs[index][i], id);
     }
 }
 
@@ -40,65 +41,74 @@ int main(int argc, char** argv)
     size_t V, E;
     cin >> V >> E;
 
+    // parse input
     vector<vector<size_t>> graphs;
-    graphs.resize(V);
+    graphs.resize(V + 1);
     vector<vector<size_t>> rev_graphs;
-    rev_graphs.resize(V);
+    rev_graphs.resize(V + 1);
     for(size_t e = 0; e < E; ++e)
     {
         size_t from, to;
         cin >> from >> to;
-        graphs[from - 1].push_back(to - 1);
-        rev_graphs[to - 1].push_back(from - 1);
+        graphs[from].push_back(to);
+        rev_graphs[to].push_back(from);
     }
 
+    // forward
     vector<bool> visited;
-    visited.resize(V, false);
+    visited.resize(V + 1, false);
     vector<size_t> topology;
     topology.reserve(V);
 
-    for(size_t v = 0; v < V; ++v)
+    for(size_t v = 1; v <= V; ++v)
     {
         topology_sort(graphs, v, visited, topology);
     }
 
-    fill(visited.begin(), visited.end(), false);
+    // backward
+    size_t scc_count = 0;
+    vector<size_t> scc;
+    scc.resize(V + 1, ID_END);
+    
+    for(size_t v = V; v-- > 0;)
+    {
+        size_t current = topology[v];
+        size_t current_scc = scc[topology[v]];
+        if(scc[topology[v]] == ID_END)
+        {
+            build_scc2(rev_graphs, scc, topology[v], scc_count++);
+        }
+    }
+
+    // parse result
+    size_t idmap_cnt = 0;
+    vector<size_t> idmap;
+    idmap.resize(scc_count, ID_END);
 
     vector<vector<size_t>> result;
-    size_t v = V;
-    do
+    result.resize(scc_count);
+    for(size_t v = 1; v <= V; ++v)
     {
-        v--;
-        if(!visited[topology[v]])
+        if(idmap[scc[v]] == ID_END)
         {
-            result.emplace_back();
-            build_scc(rev_graphs, visited, topology[v], result.back());
+            idmap[scc[v]] = idmap_cnt++;
         }
 
-    } while(v != 0);
-
-    for(size_t v = 0; v < result.size(); ++v)
-    {
-        sort(result[v].begin(), result[v].end());
+        result[idmap[scc[v]]].push_back(v);
     }
 
-    sort(result.begin(), result.end(), [](const auto& lhs, const auto& rhs) {
-        if(lhs.size() == 0)
-            return false;
-        if(rhs.size() == 0)
-            return true;
-        return lhs[0] < rhs[0];
-    });
-
-    cout << result.size() << '\n';
-    for(size_t v = 0; v < result.size(); ++v)
+    // output
+    cout << scc_count << '\n';
+    for(size_t i = 0; i < result.size(); ++i)
     {
-        for(size_t i = 0; i < result[v].size(); ++i)
+        for(size_t j = 0; j < result[i].size(); ++j)
         {
-            cout << (result[v][i] + 1) << ' ';
+            cout << result[i][j] << ' ';
         }
+        
         cout << "-1\n";
     }
+
     cout << endl;
 
     return 0;
