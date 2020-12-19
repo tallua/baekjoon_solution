@@ -81,29 +81,30 @@ size_t bisearch(const vector<T>& arr, const T target, size_t begin, size_t end)
     return target <= arr[begin] ? begin : end;
 }
 
-using precipitation_t = int32_t;
-using year_t = int32_t;
-
-
-struct max_preci
+template <typename T>
+struct op_max
 {
-    constexpr precipitation_t operator() (precipitation_t lhs, precipitation_t rhs) const
+    constexpr T operator() (T lhs, T rhs) const
     {
         return lhs < rhs ? rhs : lhs;
     }
 };
 
-struct bool_and
+template <typename T>
+struct op_and
 {
-    constexpr  bool operator() (bool lhs, bool rhs) const
+    constexpr T operator() (T lhs, T rhs) const
     {
         return lhs && rhs;
     }
 };
 
-using preci_segtree_t = fixed_segtree<precipitation_t, 50000, max_preci, precipitation_t(0)>;
+using precipitation_t = int32_t; // precipitation is how much rain comes!
+using year_t = int32_t;
+
+using preci_segtree_t = fixed_segtree<precipitation_t, 50000, op_max<precipitation_t>, precipitation_t(0)>;
 preci_segtree_t preci_segtree;
-using continuous_segtree_t = fixed_segtree<bool, 50000, bool_and, true>;
+using continuous_segtree_t = fixed_segtree<bool, 50000, op_and<bool>, true>;
 continuous_segtree_t continuous_segtree;
 
 int main(int argc, char** argv)
