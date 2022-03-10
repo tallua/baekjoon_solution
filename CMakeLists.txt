@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 17)
 project(baekjoon-solution)
 
-set(PROBLEM_ID 1003)
+set(PROBLEM_ID 18235)
 
 set(MAIN_SOURCE
   ./${PROBLEM_ID}/main.cpp
@@ -25,16 +25,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 
-if (EXISTS "./${PROBLEM_ID}/test.cpp")
-  set(TEST_SOURCE
-    ./test/test.cpp
-    ./${PROBLEM_ID}/test.cpp
-  )
-else()
-  set(TEST_SOURCE
-    ./test/test.cpp
-  )
-endif()
+set(TEST_SOURCE
+  ./test/test.cpp
+  ./${PROBLEM_ID}/test.cpp
+)
 
 add_executable(baekjoon-solution-test
   ${MAIN_SOURCE}
