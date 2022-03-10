@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 project(baekjoon-solution)
 
 set(PROBLEM_ID 18235)
@@ -12,7 +12,7 @@ add_executable(baekjoon-solution
   ${MAIN_SOURCE}
 )
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 project(baekjoon-solution-test)
 
 ## GTEST
@@ -30,6 +30,7 @@ set(TEST_SOURCE
   ./${PROBLEM_ID}/test.cpp
 )
 
+add_compile_definitions(TEST_DISABLED)
 add_executable(baekjoon-solution-test
   ${MAIN_SOURCE}
   ${TEST_SOURCE}
