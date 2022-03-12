@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 20)
 project(baekjoon-solution)
 
-set(PROBLEM_ID 18235)
+set(PROBLEM_ID 10290)
 
 set(MAIN_SOURCE
   ./${PROBLEM_ID}/main.cpp
@@ -30,6 +30,7 @@ set(TEST_SOURCE
   ./${PROBLEM_ID}/test.cpp
 )
 
+add_compile_options(-fpermissive -pedantic)
 add_compile_definitions(TEST_DISABLED)
 add_executable(baekjoon-solution-test
   ${MAIN_SOURCE}
