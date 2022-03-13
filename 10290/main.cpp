@@ -255,7 +255,7 @@ void run_test(std::istream& is, std::ostream& os) {
     }
 }
 
-#ifndef TEST_DISABLED
+#ifndef TEST_ENABLED
 int main(int argc, char** argv) {
     std::cin.tie(nullptr);
     std::ios::sync_with_stdio(false);

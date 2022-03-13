@@ -57,7 +57,7 @@ void run_test(std::istream& is, std::ostream& os) {
     return;
 }
 
-#ifndef TEST_DISABLED
+#ifndef TEST_ENABLED
 
 int main(int argc, char** argv) {
     run_test(std::cin, std::cout);
