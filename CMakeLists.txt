@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 20)
 project(baekjoon-solution)
 
-set(PROBLEM_ID 14905)
+set(PROBLEM_ID 21774)
 
 set(MAIN_SOURCE
   ./${PROBLEM_ID}/main.cpp
