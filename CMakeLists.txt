@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_CXX_STANDARD 20)
 project(baekjoon-solution)
 
-set(PROBLEM_ID 5719)
+set(PROBLEM_ID 1917)
 
 set(MAIN_SOURCE
   ./${PROBLEM_ID}/main.cpp
@@ -11,6 +11,7 @@ set(MAIN_SOURCE
 add_executable(baekjoon-solution
   ${MAIN_SOURCE}
 )
+target_compile_options(baekjoon-solution BEFORE PRIVATE -fpermissive -pedantic)
 
 set(CMAKE_CXX_STANDARD 20)
 project(baekjoon-solution-test)
@@ -30,12 +31,13 @@ set(TEST_SOURCE
   ./${PROBLEM_ID}/test.cpp
 )
 
-add_compile_options(-fpermissive -pedantic)
-add_compile_definitions(TEST_ENABLED)
+
 add_executable(baekjoon-solution-test
-  ${MAIN_SOURCE}
-  ${TEST_SOURCE}
+${MAIN_SOURCE}
+${TEST_SOURCE}
 )
+target_compile_options(baekjoon-solution-test BEFORE PRIVATE -fpermissive -pedantic)
+target_compile_definitions(baekjoon-solution-test PRIVATE TEST_ENABLED)
 target_link_libraries(baekjoon-solution-test
   gtest_main
 )
