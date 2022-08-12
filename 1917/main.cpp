@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <iostream>
 
@@ -11,12 +12,10 @@ struct coord_t {
 };
 
 coord_t find_first_one(const board_t<int>& board) {
-    for (int x = 0; x < board.size(); ++x) {
-        if (board[x] == 1)
-            return {x % 6, x / 6};
-    }
-
-    return {};
+    auto first_it =
+        std::find_if(board.begin(), board.end(), [](auto v) { return v == 1; });
+    auto pos = std::distance(board.begin(), first_it);
+    return {pos % 6, pos / 6};
 }
 
 bool is_in_board(const coord_t& pos) {
@@ -47,14 +46,12 @@ struct Cube {
     Cube move(Direction dir) {
         switch (dir) {
             case Direction::Right: {
-                return {
-                    faces[1], faces[2], faces[3], faces[0], faces[4], faces[5],
-                };
+                return {faces[1], faces[2], faces[3],
+                        faces[0], faces[4], faces[5]};
             }
             case Direction::Left: {
-                return {
-                    faces[3], faces[0], faces[1], faces[2], faces[4], faces[5],
-                };
+                return {faces[3], faces[0], faces[1],
+                        faces[2], faces[4], faces[5]};
             }
             case Direction::Up: {
                 return {faces[5], faces[1], faces[4],
@@ -82,7 +79,8 @@ void set_value(auto& b, coord_t pos, auto value) {
 
 }  // namespace
 
-bool dfs(board_t<int>& board, std::array<bool, 6>& visited, Cube cube, coord_t pos) {
+bool dfs(board_t<int>& board, std::array<bool, 6>& visited, Cube cube,
+         coord_t pos) {
     if (visited[static_cast<int>(cube.front())]) {
         return false;
     }
