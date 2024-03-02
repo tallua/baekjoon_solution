@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-set(PROBLEM_ID 11689)
+set(PROBLEM_ID 1214)
 
 ## Main
 set(CMAKE_CXX_STANDARD 20)
